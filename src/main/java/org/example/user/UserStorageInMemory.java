@@ -20,11 +20,11 @@ public class UserStorageInMemory implements UserStorage {
     }
 
     @Override
-    public User get(String msidsn) {
-        if (msidsn == null) {
+    public User get(String msisdn) {
+        if (msisdn == null) {
             throw new UserNotFoundException(EMPTY_MSIDSN);
         }
-        User user = users.get(msidsn.trim());
+        User user = users.get(msisdn.trim());
         if (user == null) {
             throw new UserNotFoundException();
         };

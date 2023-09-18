@@ -1,12 +1,12 @@
 package org.example.user;
 
+import org.example.TestData;
 import org.example.exception.user.UserNotFoundException;
-
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.example.exception.user.UserNotSavedException;
 import org.junit.*;
 
+import static org.example.TestData.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
@@ -14,74 +14,66 @@ public class UserStorageInMemoryTest {
 
     private static UserStorage userStorage;
 
-    private static final User vasya = new User("Vasya", "Petrov", "12345");
-    private static final User kolya =  new User("Kolya", "Ivanov", "8913");
-
     @Before
     public void setUp() throws Exception {
-        ConcurrentHashMap<String, User> users = new ConcurrentHashMap<>();
-        users.put("12345", vasya);
-        users.put("8913", kolya);
-        userStorage = new UserStorageInMemory(users);
+        userStorage = TestData.getStandardUserStorage();
     }
 
     @Test
     public void get() {
-        assertEquals(vasya, userStorage.get("12345 "));
+        assertEquals(TestData.getVasya(), userStorage.get(VASYA_PHONE));
     }
 
     @Test
     public void getNotFound() {
-        assertThrows(UserNotFoundException.class, () -> userStorage.get("1"));
+        assertThrows(UserNotFoundException.class, () -> userStorage.get(NOT_FOUND_PHONE));
     }
 
     @Test
     public void add() {
-        User petya = new User("petya", "fishman", "138500");
-        userStorage.add(petya);
-        User expected = new User("petya", "fishman", "138500");
-        assertEquals(expected, userStorage.get("138500"));
+        userStorage.add(TestData.getPetya());
+        assertEquals(TestData.getPetya(), userStorage.get(PETYA_PHONE));
     }
 
     @Test
     public void addEmpty() {
-        User petya = new User("petya", "fishman", "");
+        User petya = getPetya();
+        petya.setPhone("");
         assertThrows(UserNotSavedException.class, () -> userStorage.add(petya));
     }
 
     @Test
     public void update() {
-        assertEquals(kolya, userStorage.get("8913"));
-        User kolyaForUpdate = new User("Nikolay", "Ivanov", "8913");
-        userStorage.update("8913", kolyaForUpdate);
-        User expected = new User("Nikolay", "Ivanov", "8913");
-        assertEquals(expected, userStorage.get("8913"));
+        assertEquals(TestData.getKolya(), userStorage.get(KOLYA_PHONE));
+        userStorage.update(KOLYA_PHONE, TestData.getNikolay());
+        assertEquals(TestData.getNikolay(), userStorage.get(KOLYA_PHONE));
     }
 
     @Test
     public void updatePhoneNotSaved() {
-        assertEquals(kolya, userStorage.get("8913"));
-        User kolyaForUpdate = new User("Nikolay", "Ivanov", "8952");
-        assertThrows(UserNotSavedException.class, () -> userStorage.update("8913", kolyaForUpdate));
+        assertEquals(TestData.getKolya(), userStorage.get(KOLYA_PHONE));
+        User kolyaForUpdate = TestData.getNikolay();
+        kolyaForUpdate.setPhone("8952");
+        assertThrows(UserNotSavedException.class, () -> userStorage.update(KOLYA_PHONE, kolyaForUpdate));
     }
 
 
     @Test
     public void delete() {
-        assertEquals(kolya, userStorage.get("8913"));
-        userStorage.delete(kolya);
-        assertThrows(UserNotFoundException.class, () -> userStorage.get("8913"));
+        assertEquals(TestData.getKolya(), userStorage.get(KOLYA_PHONE));
+        userStorage.delete(TestData.getKolya());
+        assertThrows(UserNotFoundException.class, () -> userStorage.get(KOLYA_PHONE));
     }
 
     @Test
     public void deleteNotFound() {
-        assertThrows(UserNotFoundException.class, () -> userStorage.delete(
-                new User("petya", "fishman", "1000")));
+        assertThrows(UserNotFoundException.class, () -> userStorage.delete(TestData.getPetya()));
     }
 
     @Test
     public void deleteIncorrect() {
-        assertThrows(UserNotSavedException.class, () -> userStorage.delete(
-                new User("petya", "fishman", "")));
+        User petya = getPetya();
+        petya.setPhone("");
+        assertThrows(UserNotSavedException.class, () -> userStorage.delete(petya));
     }
 }

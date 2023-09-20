@@ -1,20 +1,15 @@
 package org.example;
 
-import org.example.exception.IncorrectEnrichmentDataException;
-import org.example.exception.InvalidEnrichmentException;
-import org.example.exception.UnsupportedEnrichmentTypeException;
+import org.example.exception.enrichment.IncorrectEnrichmentDataException;
+import org.example.exception.enrichment.InvalidEnrichmentException;
+import org.example.exception.enrichment.UnsupportedEnrichmentTypeException;
 import org.example.message.Message;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Map;
-
-import static org.example.TestData.getNewStandardEnrichedVasyaContentMap;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.example.TestData.*;
 import static org.junit.Assert.assertThrows;
-
-import static org.example.TestData.getStandardUserStorage;
 
 public class EnricherTest {
 
@@ -27,29 +22,59 @@ public class EnricherTest {
 
     @Test
     public void enrich() {
-        Map<String, String> content = TestData.getNewStandardVasyaContentMap();
-        Map<String, String> enriched = enricher.enrich(content, Message.EnrichmentType.MSISDN);
-        assertThat(enriched).containsExactlyInAnyOrderEntriesOf(getNewStandardEnrichedVasyaContentMap());
+        Message enriched = enricher.enrich(CORRECT_VASYA_MESSAGE);
+        assertThat(enriched).isEqualTo(CORRECT_VASYA_ENRICHED_MESSAGE);
+    }
+
+    @Test
+    public void enrichWithEnrichment() {
+        Message message = new Message("{\"action\":\"button_click\", " +
+                "\"page\":\"book_card\",\"msisdn\":\"12345\"," +
+                "\"enrichment\":{\"firstname\":\"Lyucya\",\"lastname\":\"Weisman\"}," +
+                "\"tree value\":{\"first\":\"first value\",\"second tree value\":" +
+                "{\"one\":\"one\",\"two\":\"two\"}}}",
+                Message.EnrichmentType.MSISDN);
+        Message enriched = enricher.enrich(message);
+        Message expected = new Message("{\"action\":\"button_click\"," +
+                "\"page\":\"book_card\",\"msisdn\":\"12345\"," +
+                "\"tree value\":{\"first\":\"first value\",\"second tree value\":" +
+                "{\"one\":\"one\",\"two\":\"two\"}}," +
+                "\"enrichment\":{\"firstname\":\"Vasya\",\"lastname\":\"Petrov\"}}",
+                Message.EnrichmentType.MSISDN);
+        assertThat(enriched).isEqualTo(expected);
+    }
+
+    @Test
+    public void enrichWithEmptyEnrichment() {
+        Message message = new Message("{\"action\":\"button_click\"," +
+                "\"page\":\"book_card\",\"msisdn\":\"12345\"," +
+                "\"enrichment\":\"\"}",
+                Message.EnrichmentType.MSISDN);
+        Message enriched = enricher.enrich(message);
+        assertThat(enriched).isEqualTo(CORRECT_VASYA_ENRICHED_MESSAGE);
     }
 
     @Test
     public void enrichNotFoundMsisdn() {
-        Map<String, String> content = TestData.getNewStandardVasyaContentMap();
-        content.remove("msisdn");
-        assertThrows(IncorrectEnrichmentDataException.class, () -> enricher.enrich(content, Message.EnrichmentType.MSISDN));
+       Message message = new Message("{\"action\":\"button_click\"," +
+                "\"page\":\"book_card\"}",
+                Message.EnrichmentType.MSISDN);
+        assertThrows(IncorrectEnrichmentDataException.class, () -> enricher.enrich(message));
     }
 
     @Test
     public void enrichIncorrectEnrichmentType() {
-        Map<String, String> content = TestData.getNewStandardVasyaContentMap();
-        assertThrows(UnsupportedEnrichmentTypeException.class, () -> enricher.enrich(content, null));
+        Message message = new Message("{\"action\":\"button_click\"," +
+                "\"page\":\"book_card\"}", null);
+        assertThrows(UnsupportedEnrichmentTypeException.class, () -> enricher.enrich(message));
     }
 
     @Test
     public void enrichCouldNotFindMsisdn() {
-        Map<String, String> content = TestData.getNewStandardVasyaContentMap();
-        content.put("msisdn", "000");
-        assertThrows(InvalidEnrichmentException.class, () -> enricher.enrich(content, Message.EnrichmentType.MSISDN));
+        Message message = new Message("{\"action\":\"button_click\"," +
+                "\"page\":\"book_card\",\"msisdn\":\"000\"}",
+                Message.EnrichmentType.MSISDN);
+        assertThrows(InvalidEnrichmentException.class, () -> enricher.enrich(message));
     }
 
 }

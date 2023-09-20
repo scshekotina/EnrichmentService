@@ -1,4 +1,4 @@
-package org.example.exception;
+package org.example.exception.enrichment;
 
 public class InvalidEnrichmentException extends RuntimeException{
 

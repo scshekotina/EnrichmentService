@@ -10,11 +10,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TestData {
-    public static final Message CORRECT_VASYA = new Message("{\"action\": \"button_click\", " +
-            "\"page\": \"book_card\", \"msisdn\": \"12345\"}",
+    public static final Message CORRECT_VASYA_MESSAGE = new Message("{\"action\":\"button_click\"," +
+            "\"page\":\"book_card\",\"msisdn\":\"12345\"}",
             Message.EnrichmentType.MSISDN);
-    public static final Message CORRECT_VASYA_ENRICHED = new Message("{\"action\": \"button_click\", " +
-            "\"page\": \"book_card\", \"msisdn\": \"12345\"}",
+
+    public static final Message CORRECT_VASYA_ENRICHED_MESSAGE = new Message("{\"action\":\"button_click\"," +
+            "\"page\":\"book_card\",\"msisdn\":\"12345\"," +
+            "\"enrichment\":{\"firstname\":\"Vasya\",\"lastname\":\"Petrov\"}}",
             Message.EnrichmentType.MSISDN);
 
     public static final String NOT_FOUND_PHONE = "1";
@@ -46,16 +48,16 @@ public class TestData {
         return content;
     }
 
-    public static Map<String, String> getNewStandardEnrichedVasyaContentMap() {
-        HashMap<String, String> content = new HashMap<>();
+    public static Map<String, Object> getNewStandardEnrichedVasyaContentMap() {
+        HashMap<String, Object> content = new HashMap<>();
         content.put("action", "button_click");
         content.put("page", "book_card");
         content.put("msisdn", "12345");
-        HashMap<String, String> enrichment = new HashMap<>();
+        HashMap<String, Object> enrichment = new HashMap<>();
         User vasya = getVasya();
         enrichment.put("firstname", vasya.getFirstname());
         enrichment.put("lastname", vasya.getLastname());
-        content.put("enrichment", enrichment.toString());
+        content.put("enrichment", enrichment);
         return content;
     }
 

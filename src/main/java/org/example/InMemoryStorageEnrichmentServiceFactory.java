@@ -12,17 +12,24 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class InMemoryStorageEnrichmentServiceFactory implements EnrichmentServiceFactory {
+
     @Override
     public EnrichmentService createEnrichmentService() {
         BlockingQueue<Message> enrichedMessagesQueue = new ArrayBlockingQueue<>(100);
         BlockingQueue<Message> notEnrichedMessagesQueue = new ArrayBlockingQueue<>(100);
 
+        MessageStorageInMemory enrichedMessageStorageInMemory =
+                new MessageStorageInMemory(Collections.synchronizedList(new ArrayList<>()));
+
+        MessageStorageInMemory notEnrichedMessageStorageInMemory =
+                new MessageStorageInMemory(Collections.synchronizedList(new ArrayList<>()));
+
         MessageEnrichmentEventListener enrichmentEventListener = new MessageEnrichmentEventListener(
-                new MessageStorageInMemory(Collections.synchronizedList(new ArrayList<>())),
+                enrichedMessageStorageInMemory,
                 enrichedMessagesQueue);
 
         MessageEnrichmentEventListener notEnrichmentEventListener = new MessageEnrichmentEventListener(
-                new MessageStorageInMemory(Collections.synchronizedList(new ArrayList<>())),
+                notEnrichedMessageStorageInMemory,
                 notEnrichedMessagesQueue);
 
         Thread enrichmentEventListenerThread = new Thread(enrichmentEventListener);
@@ -34,7 +41,9 @@ public class InMemoryStorageEnrichmentServiceFactory implements EnrichmentServic
         return new EnrichmentService(
                 new Enricher(new UserStorageInMemory(new ConcurrentHashMap<>())),
                 enrichedMessagesQueue,
-                notEnrichedMessagesQueue);
+                notEnrichedMessagesQueue,
+                enrichedMessageStorageInMemory,
+                notEnrichedMessageStorageInMemory);
     }
 
 }

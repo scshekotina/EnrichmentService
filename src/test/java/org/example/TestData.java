@@ -67,4 +67,14 @@ public class TestData {
         userStorage.add(getKolya());
         return userStorage;
     }
+
+    public static Message getStandardMessage(String...params) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("{\"action\":\"button_click\",\"page\":\"book_card\"");
+        for (String s : params) {
+            builder.append(s);
+        }
+        builder.append("}");
+        return new Message(builder.toString(), Message.EnrichmentType.MSISDN);
+    }
 }

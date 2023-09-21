@@ -16,7 +16,7 @@ public class EnricherTest {
     private Enricher enricher;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp(){
         enricher = new Enricher(getStandardUserStorage());
     }
 
@@ -28,52 +28,41 @@ public class EnricherTest {
 
     @Test
     public void enrichWithEnrichment() {
-        Message message = new Message("{\"action\":\"button_click\", " +
-                "\"page\":\"book_card\",\"msisdn\":\"12345\"," +
-                "\"enrichment\":{\"firstname\":\"Lyucya\",\"lastname\":\"Weisman\"}," +
+        Message message = getStandardMessage("\"msisdn\" : \"12345\"",
+                "\"enrichment\": {\"firstname\":\"Lyucya\",\"lastname\":\"Weisman\"}",
                 "\"tree value\":{\"first\":\"first value\",\"second tree value\":" +
-                "{\"one\":\"one\",\"two\":\"two\"}}}",
-                Message.EnrichmentType.MSISDN);
+                "{\"one\":\"one\",\"two\":\"two\"}}");
         Message enriched = enricher.enrich(message);
-        Message expected = new Message("{\"action\":\"button_click\"," +
-                "\"page\":\"book_card\",\"msisdn\":\"12345\"," +
+        Message expected = getStandardMessage("\"msisdn\" : \"12345\"",
+                "\"enrichment\": {\"firstname\":\"Lyucya\",\"lastname\":\"Weisman\"}",
                 "\"tree value\":{\"first\":\"first value\",\"second tree value\":" +
-                "{\"one\":\"one\",\"two\":\"two\"}}," +
-                "\"enrichment\":{\"firstname\":\"Vasya\",\"lastname\":\"Petrov\"}}",
-                Message.EnrichmentType.MSISDN);
+                        "{\"one\":\"one\",\"two\":\"two\"}}");
         assertThat(enriched).isEqualTo(expected);
     }
 
     @Test
     public void enrichWithEmptyEnrichment() {
-        Message message = new Message("{\"action\":\"button_click\"," +
-                "\"page\":\"book_card\",\"msisdn\":\"12345\"," +
-                "\"enrichment\":\"\"}",
-                Message.EnrichmentType.MSISDN);
+        Message message = getStandardMessage("\"msisdn\":\"12345\",",
+                "\"enrichment\":\"\"}");
         Message enriched = enricher.enrich(message);
         assertThat(enriched).isEqualTo(CORRECT_VASYA_ENRICHED_MESSAGE);
     }
 
     @Test
     public void enrichNotFoundMsisdn() {
-       Message message = new Message("{\"action\":\"button_click\"," +
-                "\"page\":\"book_card\"}",
-                Message.EnrichmentType.MSISDN);
+       Message message = getStandardMessage();
         assertThrows(IncorrectEnrichmentDataException.class, () -> enricher.enrich(message));
     }
 
     @Test
     public void enrichIncorrectEnrichmentType() {
-        Message message = new Message("{\"action\":\"button_click\"," +
-                "\"page\":\"book_card\"}", null);
+        Message message = new Message(getStandardMessage().getContent(), null);
         assertThrows(UnsupportedEnrichmentTypeException.class, () -> enricher.enrich(message));
     }
 
     @Test
     public void enrichCouldNotFindMsisdn() {
-        Message message = new Message("{\"action\":\"button_click\"," +
-                "\"page\":\"book_card\",\"msisdn\":\"000\"}",
-                Message.EnrichmentType.MSISDN);
+        Message message = getStandardMessage("\"msisdn\":\"000\"");
         assertThrows(InvalidEnrichmentException.class, () -> enricher.enrich(message));
     }
 
